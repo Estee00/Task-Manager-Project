@@ -1,103 +1,210 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styled from 'styled-components';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+export default function AuthPage() {
+	const router = useRouter();
+	const [mode, setMode] = useState<'login' | 'register'>('login');
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [form, setForm] = useState({
+		firstName: '',
+		lastName: '',
+		email: '',
+		password: '',
+	});
+
+	useEffect(() => {
+		const user = localStorage.getItem('auth_user');
+		if (user) router.push('/dashboard');
+	}, []);
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+	};
+
+	const getUsers = () => {
+		const users = localStorage.getItem('users');
+		return users ? JSON.parse(users) : [];
+	};
+
+	const saveUsers = (users: any[]) => {
+		localStorage.setItem('users', JSON.stringify(users));
+	};
+
+	const handleRegister = () => {
+		setIsSubmitting(true);
+		const { firstName, lastName, email, password } = form;
+		if (!firstName || !lastName || !email || !password) {
+			alert('Please fill all fields');
+			return setIsSubmitting(false);
+		}
+
+		const users = getUsers();
+		if (users.find(u => u.email === email)) {
+			alert('Email already exists');
+			return setIsSubmitting(false);
+		}
+
+		const newUser = {
+			id: Date.now().toString(),
+			firstName,
+			lastName,
+			email,
+			password,
+		};
+
+		saveUsers([...users, newUser]);
+		localStorage.setItem('auth_user', JSON.stringify(newUser));
+		router.push('/dashboard');
+	};
+
+	const handleLogin = () => {
+		setIsSubmitting(true);
+		const users = getUsers();
+		const user = users.find(
+			u => u.email === form.email && u.password === form.password
+		);
+		if (user) {
+			localStorage.setItem('auth_user', JSON.stringify(user));
+			router.push('/dashboard');
+		} else {
+			alert('Invalid credentials');
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleSubmit = () => {
+		if (isSubmitting) return;
+		if (mode === 'login') handleLogin();
+		else handleRegister();
+	};
+
+	return (
+		<Container>
+			<Box>
+				<Title>{mode === 'login' ? 'Login' : 'Register'}</Title>
+
+				{mode === 'register' && (
+					<>
+						<Input
+							name="firstName"
+							placeholder="First Name"
+							value={form.firstName}
+							onChange={handleChange}
+						/>
+						<Input
+							name="lastName"
+							placeholder="Last Name"
+							value={form.lastName}
+							onChange={handleChange}
+						/>
+					</>
+				)}
+
+				<Input
+					name="email"
+					placeholder="Email"
+					value={form.email}
+					onChange={handleChange}
+				/>
+				<Input
+					name="password"
+					type="password"
+					placeholder="Password"
+					value={form.password}
+					onChange={handleChange}
+				/>
+
+				<Button onClick={handleSubmit} disabled={isSubmitting}>
+					{isSubmitting
+						? mode === 'login'
+							? 'Logging in...'
+							: 'Registering...'
+						: mode === 'login'
+							? 'Login'
+							: 'Register'}
+				</Button>
+
+				<Switch>
+					{mode === 'login'
+						? "Don't have an account?"
+						: 'Already have an account?'}{' '}
+					<LinkText onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+						{mode === 'login' ? 'Register' : 'Login'}
+					</LinkText>
+				</Switch>
+			</Box>
+		</Container>
+	);
 }
+
+// Styled Components
+
+const Container = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, #ece9e6, #ffffff);
+  font-family: Arial, sans-serif;
+`;
+
+const Box = styled.div`
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  max-width: max-content;
+`;
+
+const Title = styled.h1`
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 25px;
+`;
+
+const Input = styled.input`
+  width: 420px;
+  padding: 12px 14px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+`;
+
+const Button = styled.button<{ disabled?: boolean }>`
+  width: 420px;
+  padding: 12px 14px;
+  background-color: ${({ disabled }) => (disabled ? '#a3a3a3' : '#4f46e5')};
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${({ disabled }) => (disabled ? '#a3a3a3' : '#4338ca')};
+  }
+`;
+
+const Switch = styled.p`
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #555;
+`;
+
+const LinkText = styled.span`
+  color: #4f46e5;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 6px;
+`;
+
