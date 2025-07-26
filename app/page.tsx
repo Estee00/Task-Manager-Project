@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export default function AuthPage() {
 	const router = useRouter();
 	const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -42,7 +49,7 @@ export default function AuthPage() {
 		}
 
 		const users = getUsers();
-		if (users.find(u => u.email === email)) {
+		if (users.find((u: User) => u.email === email)) {
 			alert('Email already exists');
 			return setIsSubmitting(false);
 		}
