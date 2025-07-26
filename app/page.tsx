@@ -9,6 +9,7 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
+  password: string;
 }
 
 export default function AuthPage() {
@@ -71,7 +72,7 @@ export default function AuthPage() {
 		setIsSubmitting(true);
 		const users = getUsers();
 		const user = users.find(
-			u => u.email === form.email && u.password === form.password
+			(u: User) => u.email === form.email && u.password === form.password
 		);
 		if (user) {
 			localStorage.setItem('auth_user', JSON.stringify(user));
